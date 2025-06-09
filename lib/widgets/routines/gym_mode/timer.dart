@@ -1,20 +1,3 @@
-/*
- * This file is part of wger Workout Manager <https://github.com/wger-project>.
- * Copyright (C) 2020, 2021 wger Team
- *
- * wger Workout Manager is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * wger Workout Manager is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -40,42 +23,33 @@ class TimerWidget extends StatefulWidget {
 }
 
 class _TimerWidgetState extends State<TimerWidget> {
-  // See https://stackoverflow.com/questions/54610121/flutter-countdown-timer
-
-  Timer? _timer;
-  int _seconds = 1;
+  late DateTime _startTime;
   final _maxSeconds = 600;
-  DateTime today = DateTime(2000, 1, 1, 0, 0, 0);
+  late Timer _uiTimer;
 
-  void startTimer() {
-    setState(() => _seconds = 0);
+  @override
+  void initState() {
+    super.initState();
+    _startTime = DateTime.now();
 
-    _timer?.cancel();
-
-    const oneSecond = Duration(seconds: 1);
-    _timer = Timer.periodic(oneSecond, (Timer timer) {
-      if (_seconds == _maxSeconds) {
-        setState(() => timer.cancel());
-      } else {
-        setState(() => _seconds++);
-      }
+    _uiTimer = Timer.periodic(Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _uiTimer.cancel();
     super.dispose();
   }
 
   @override
-  void initState() {
-    super.initState();
-    startTimer();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final elapsed = DateTime.now().difference(_startTime).inSeconds;
+    final displaySeconds = elapsed > _maxSeconds ? _maxSeconds : elapsed;
+    final displayTime = DateTime(2000, 1, 1, 0, 0, 0)
+        .add(Duration(seconds: displaySeconds));
+
     return Column(
       children: [
         NavigationHeader(
@@ -86,8 +60,11 @@ class _TimerWidgetState extends State<TimerWidget> {
         Expanded(
           child: Center(
             child: Text(
-              DateFormat('m:ss').format(today.add(Duration(seconds: _seconds))),
-              style: Theme.of(context).textTheme.displayLarge!.copyWith(color: wgerPrimaryColor),
+              DateFormat('m:ss').format(displayTime),
+              style: Theme.of(context)
+                  .textTheme
+                  .displayLarge!
+                  .copyWith(color: wgerPrimaryColor),
             ),
           ),
         ),
@@ -115,40 +92,32 @@ class TimerCountdownWidget extends StatefulWidget {
 }
 
 class _TimerCountdownWidgetState extends State<TimerCountdownWidget> {
-  // See https://stackoverflow.com/questions/54610121/flutter-countdown-timer
+  late DateTime _endTime;
+  late Timer _uiTimer;
 
-  Timer? _timer;
-  late int _seconds;
-  DateTime today = DateTime(2000, 1, 1, 0, 0, 0);
+  @override
+  void initState() {
+    super.initState();
+    _endTime = DateTime.now().add(Duration(seconds: widget._seconds));
 
-  void startTimer() {
-    _timer?.cancel();
-
-    const oneSecond = Duration(seconds: 1);
-    _timer = Timer.periodic(oneSecond, (Timer timer) {
-      if (_seconds == 0) {
-        setState(() => timer.cancel());
-      } else {
-        setState(() => _seconds--);
-      }
+    _uiTimer = Timer.periodic(Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _uiTimer.cancel();
     super.dispose();
   }
 
   @override
-  void initState() {
-    super.initState();
-    _seconds = widget._seconds;
-    startTimer();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final remaining = _endTime.difference(DateTime.now());
+    final remainingSeconds = remaining.inSeconds <= 0 ? 0 : remaining.inSeconds;
+    final displayTime = DateTime(2000, 1, 1, 0, 0, 0)
+        .add(Duration(seconds: remainingSeconds));
+
     return Column(
       children: [
         NavigationHeader(
@@ -159,8 +128,11 @@ class _TimerCountdownWidgetState extends State<TimerCountdownWidget> {
         Expanded(
           child: Center(
             child: Text(
-              DateFormat('m:ss').format(today.add(Duration(seconds: _seconds))),
-              style: Theme.of(context).textTheme.displayLarge!.copyWith(color: wgerPrimaryColor),
+              DateFormat('m:ss').format(displayTime),
+              style: Theme.of(context)
+                  .textTheme
+                  .displayLarge!
+                  .copyWith(color: wgerPrimaryColor),
             ),
           ),
         ),
